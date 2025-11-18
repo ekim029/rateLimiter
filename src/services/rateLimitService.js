@@ -16,4 +16,4 @@ const checkRateLimit = async (req, option) => {
     }
 }
 
-module.exports = { checkRateLimit }
+module.exports = checkRateLimit;
