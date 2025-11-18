@@ -15,4 +15,4 @@ const rateLimiter = (option) => {
     }
 }
 
-module.exports = rateLimiter;
+module.exports = { rateLimiter };

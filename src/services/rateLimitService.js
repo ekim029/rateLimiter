@@ -1,6 +1,8 @@
 
-const checkRateLimit = async (req, option = "tokenBucket") => {
-    switch (option) {
+const checkRateLimit = async (req, option) => {
+    const { algorithm } = option;
+
+    switch (algorithm) {
         case "fixedWindow":
             return
         case "slidingWindowLog":
@@ -13,3 +15,5 @@ const checkRateLimit = async (req, option = "tokenBucket") => {
             return
     }
 }
+
+module.exports = { checkRateLimit }
