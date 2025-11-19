@@ -1,8 +1,9 @@
+const checkRateLimit = require('../services/rateLimitService');
 
 const rateLimiter = (option) => {
     return async (req, res, next) => {
         try {
-            const allowed = checkRateLimit(req, option); // placeholder method
+            const allowed = await checkRateLimit(req, option);
 
             if (!allowed) {
                 return res.status(400).json({ message: "Too many requests" });
@@ -15,4 +16,4 @@ const rateLimiter = (option) => {
     }
 }
 
-module.exports = { rateLimiter };
+module.exports = rateLimiter;
