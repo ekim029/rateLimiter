@@ -2,7 +2,7 @@
 let bucket = {}; // temp memory
 
 const leakyBucket = (req, option) => {
-    const { maxRequests, leakRate } = option;
+    const { capacity, leakRate } = option;
 
     const key = req.ip;
     const now = Date.now();
@@ -22,7 +22,7 @@ const leakyBucket = (req, option) => {
         currBucket.lastCheck = now;
     }
 
-    if (bucket[key].queue < maxRequests) {
+    if (bucket[key].queue < capacity) {
         bucket[key].queue += 1;
         return true;
     }

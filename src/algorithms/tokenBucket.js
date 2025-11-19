@@ -2,14 +2,14 @@
 let bucket = {}; // temp memory
 
 const tokenBucket = (req, option) => {
-    const { maxRequests, refillRate } = option;
+    const { capacity, refillRate } = option;
 
     const key = req.ip;
     const now = Date.now();
 
     if (!bucket[key]) {
         bucket[key] = {
-            capacity: maxRequests,
+            tokens: capacity,
             lastRefill: now
         };
     } else {
@@ -18,12 +18,12 @@ const tokenBucket = (req, option) => {
         const timeElapsed = (now - currBucket.lastRefill) / 1000;
         const tokenToAdd = timeElapsed * refillRate
 
-        currBucket.capacity = Math.min(currBucket.capacity + tokenToAdd, maxRequests);
+        currBucket.tokens = Math.min(currBucket.tokens + tokenToAdd, capacity);
         currBucket.lastRefill = now;
     }
 
-    if (bucket[key].capacity > 0) {
-        bucket[key].capacity -= 1;
+    if (bucket[key].tokens > 0) {
+        bucket[key].tokens -= 1;
         return true;
     }
 
