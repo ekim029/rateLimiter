@@ -2,8 +2,10 @@ const fixedWindow = require('../algorithms/fixedWindow');
 const slidingWindowLog = require('../algorithms/slidingWindowLog');
 const tokenBucket = require('../algorithms/tokenBucket');
 const leakyBucket = require('../algorithms/leakyBucket');
+const validateOption = require('./validator');
 
 const checkRateLimit = async (req, option) => {
+    validateOption(option);
 
     const { algorithm } = option;
 
