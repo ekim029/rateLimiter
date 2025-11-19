@@ -1,22 +1,21 @@
+const redis = require('../redisClient');
 
-let counter = {}; // temp memory
-
-const fixedWindow = (trackingKey, option) => {
+const fixedWindow = async (trackingKey, option) => {
     const { maxRequests, window } = option;
 
-    const now = Date.now();
+    let key = `fixedWindow:${trackingKey}`;
 
-    if (!counter[trackingKey] || now - counter[trackingKey].start < window) {
-        counter[trackingKey] = { count: 1, start: now };
-        return true;
+    let count = await redis.incr(key);
+
+    if (count === 1) {
+        await redis.pexpire(key, window)
     }
 
-    if (counter[trackingKey] < maxRequests) {
-        counter[trackingKey] += 1;
-        return true;
+    if (count > maxRequests) {
+        return false;
     }
 
-    return false;
+    return true;
 }
 
 module.exports = fixedWindow;
