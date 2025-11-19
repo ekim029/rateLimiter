@@ -1,23 +1,24 @@
+const redis = require('../redisClient');
 
-let counter = {}; // temp memory
-
-const slidingWindowLog = (trackingKey, option) => {
+const slidingWindowLog = async (trackingKey, option) => {
     const { maxRequests, window } = option;
 
+    const key = `slidingWindowLog:${trackingKey}`;
     const now = Date.now();
+    const startTime = now - window;
 
-    if (!counter[trackingKey]) {
-        counter[trackingKey] = [];
-    } else {
-        counter[trackingKey] = counter[trackingKey].filter(time => now - time <= window);
+    await redis.zremrangebyscore(key, 0, startTime);
+
+    let count = await redis.zcard(key);
+
+    if (count > maxRequests) {
+        return false;
     }
 
-    if (counter[trackingKey].length < maxRequests) {
-        counter[trackingKey].push(now);
-        return true;
-    }
+    await redis.zadd(key, now, `now.${Math.random()}`);
+    await redis.pexpire(key, window);
 
-    return false;
+    return true;
 }
 
 module.exports = slidingWindowLog;
