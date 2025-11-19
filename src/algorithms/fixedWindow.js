@@ -1,19 +1,18 @@
 
 let counter = {}; // temp memory
 
-const fixedWindow = (req, option) => {
+const fixedWindow = (trackingKey, option) => {
     const { maxRequests, window } = option;
 
-    const key = req.ip;
     const now = Date.now();
 
-    if (!counter[key] || now - counter[key].start < window) {
-        counter[key] = { count: 1, start: now };
+    if (!counter[trackingKey] || now - counter[trackingKey].start < window) {
+        counter[trackingKey] = { count: 1, start: now };
         return true;
     }
 
-    if (counter[key] < maxRequests) {
-        counter[key] += 1;
+    if (counter[trackingKey] < maxRequests) {
+        counter[trackingKey] += 1;
         return true;
     }
 

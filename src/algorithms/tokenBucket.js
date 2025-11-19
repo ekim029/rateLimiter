@@ -1,19 +1,18 @@
 
 let bucket = {}; // temp memory
 
-const tokenBucket = (req, option) => {
+const tokenBucket = (trackingKey, option) => {
     const { capacity, refillRate } = option;
 
-    const key = req.ip;
     const now = Date.now();
 
-    if (!bucket[key]) {
-        bucket[key] = {
+    if (!bucket[trackingKey]) {
+        bucket[trackingKey] = {
             tokens: capacity,
             lastRefill: now
         };
     } else {
-        const currBucket = bucket[key];
+        const currBucket = bucket[trackingKey];
 
         const timeElapsed = (now - currBucket.lastRefill) / 1000;
         const tokenToAdd = timeElapsed * refillRate
@@ -22,8 +21,8 @@ const tokenBucket = (req, option) => {
         currBucket.lastRefill = now;
     }
 
-    if (bucket[key].tokens > 0) {
-        bucket[key].tokens -= 1;
+    if (bucket[trackingKey].tokens > 0) {
+        bucket[trackingKey].tokens -= 1;
         return true;
     }
 

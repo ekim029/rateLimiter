@@ -1,20 +1,19 @@
 
 let counter = {}; // temp memory
 
-const slidingWindowLog = (req, option) => {
+const slidingWindowLog = (trackingKey, option) => {
     const { maxRequests, window } = option;
 
-    const key = req.ip;
     const now = Date.now();
 
-    if (!counter[key]) {
-        counter[key] = [];
+    if (!counter[trackingKey]) {
+        counter[trackingKey] = [];
     } else {
-        counter[key] = counter[key].filter(time => now - time <= window);
+        counter[trackingKey] = counter[trackingKey].filter(time => now - time <= window);
     }
 
-    if (counter[key].length < maxRequests) {
-        counter[key].push(now);
+    if (counter[trackingKey].length < maxRequests) {
+        counter[trackingKey].push(now);
         return true;
     }
 

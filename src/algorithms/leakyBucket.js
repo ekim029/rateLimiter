@@ -1,19 +1,18 @@
 
 let bucket = {}; // temp memory
 
-const leakyBucket = (req, option) => {
+const leakyBucket = (trackingKey, option) => {
     const { capacity, leakRate } = option;
 
-    const key = req.ip;
     const now = Date.now();
 
-    if (!bucket[key]) {
-        bucket[key] = {
+    if (!bucket[trackingKey]) {
+        bucket[trackingKey] = {
             queue: 0,
             lastCheck: now
         };
     } else {
-        const currBucket = bucket[key];
+        const currBucket = bucket[trackingKey];
 
         const timeElapsed = (now - currBucket.lastCheck) / 1000;
         const tokenToRemove = timeElapsed * leakRate
@@ -22,8 +21,8 @@ const leakyBucket = (req, option) => {
         currBucket.lastCheck = now;
     }
 
-    if (bucket[key].queue < capacity) {
-        bucket[key].queue += 1;
+    if (bucket[trackingKey].queue < capacity) {
+        bucket[trackingKey].queue += 1;
         return true;
     }
 
