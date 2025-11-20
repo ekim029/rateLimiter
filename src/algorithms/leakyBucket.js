@@ -1,32 +1,41 @@
+const redis = require('../redisClient');
 
-let bucket = {}; // temp memory
+const leakyBucket = async (trackingKey, option) => {
+    const { capacity, leakRate, ttl } = option;
 
-const leakyBucket = (trackingKey, option) => {
-    const { capacity, leakRate } = option;
-
+    const key = `leakyBucket:${trackingKey}`;
     const now = Date.now();
+    const expires = ttl || Math.ceil((capacity / leakRate) * 1000);
 
-    if (!bucket[trackingKey]) {
-        bucket[trackingKey] = {
-            queue: 0,
-            lastCheck: now
-        };
+    let bucket = await redis.hgetall(key);
+    let queue;
+    let lastCheck;
+
+    if (Object.keys(bucket).length === 0) {
+        queue = 0;
+        lastCheck = now;
     } else {
-        const currBucket = bucket[trackingKey];
-
-        const timeElapsed = (now - currBucket.lastCheck) / 1000;
-        const tokenToRemove = timeElapsed * leakRate
-
-        currBucket.queue = Math.max(currBucket.queue - tokenToRemove, 0);
-        currBucket.lastCheck = now;
+        queue = parseFloat(bucket.queue);
+        lastCheck = parseInt(bucket.lastCheck, 10);
     }
 
-    if (bucket[trackingKey].queue < capacity) {
-        bucket[trackingKey].queue += 1;
-        return true;
+    const timeElapsed = (now - lastCheck) / 1000;
+    queue = Math.max(queue - timeElapsed * leakRate, 0);
+    lastCheck = now;
+
+    if (queue > capacity) {
+        await redis.hset(key, { queue, lastCheck });
+        await redis.pexpire(key, expires);
+
+        return false;
     }
 
-    return false;
+    queue += 1;
+
+    await redis.hset(key, { queue, lastCheck });
+    await redis.pexpire(key, expires);
+
+    return true;
 }
 
 module.exports = leakyBucket;
