@@ -1,32 +1,39 @@
+const redis = require('../redisClient');
 
-let bucket = {}; // temp memory
+const tokenBucket = async (trackingKey, option) => {
+    const { capacity, refillRate, ttl } = option;
 
-const tokenBucket = (trackingKey, option) => {
-    const { capacity, refillRate } = option;
-
+    const key = `tokenBucket:${trackingKey}`;
     const now = Date.now();
 
-    if (!bucket[trackingKey]) {
-        bucket[trackingKey] = {
-            tokens: capacity,
-            lastRefill: now
-        };
+    let bucket = await redis.hgetall(key);
+    let tokens;
+    let lastRefill;
+
+    if (Object.keys(bucket).length === 0) {
+        tokens = capacity;
+        lastRefill = now;
     } else {
-        const currBucket = bucket[trackingKey];
-
-        const timeElapsed = (now - currBucket.lastRefill) / 1000;
-        const tokenToAdd = timeElapsed * refillRate
-
-        currBucket.tokens = Math.min(currBucket.tokens + tokenToAdd, capacity);
-        currBucket.lastRefill = now;
+        tokens = parseFloat(bucket.tokens);
+        lastRefill = parseInt(bucket.lastRefill, 10);
     }
 
-    if (bucket[trackingKey].tokens > 0) {
-        bucket[trackingKey].tokens -= 1;
-        return true;
+    const timeElapsed = (now - lastRefill) / 1000;
+    tokens = Math.min(capacity, tokens + timeElapsed * refillRate);
+    lastRefill = now;
+
+    if (tokens < 1) {
+        await redis.hset(key, { tokens, lastRefill });
+        await redis.pexpire(key, ttl);
+        return false;
     }
 
-    return false;
+    tokens -= 1;
+
+    await redis.hset(key, { tokens, lastRefill });
+    await redis.pexpire(key, ttl);
+
+    return true;
 }
 
 module.exports = tokenBucket;
