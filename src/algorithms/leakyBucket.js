@@ -7,35 +7,39 @@ const leakyBucket = async (trackingKey, option) => {
     const now = Date.now();
     const expires = ttl || Math.ceil((capacity / leakRate) * 1000);
 
-    let bucket = await redis.hgetall(key);
-    let queue;
-    let lastCheck;
+    const script = `
+        local now = tonumber(ARGV[1])
+        local capacity = tonumber(ARGV[2])
+        local leakRate = tonumber(ARGV[3])
+        local expires = tonumber(ARGV[4])
 
-    if (Object.keys(bucket).length === 0) {
-        queue = 0;
-        lastCheck = now;
-    } else {
-        queue = parseFloat(bucket.queue);
-        lastCheck = parseInt(bucket.lastCheck, 10);
-    }
+        local queue = tonumber(redis.call("HGET", KEYS[1], "queue"))
+        local lastCheck = tonumber(redis.call("HGET", KEYS[1], "lastCheck"))
 
-    const timeElapsed = (now - lastCheck) / 1000;
-    queue = Math.max(queue - timeElapsed * leakRate, 0);
-    lastCheck = now;
+        if (not queue or not lastCheck) then
+            queue = 0
+            lastCheck = now
+        end
 
-    if (queue > capacity) {
-        await redis.hset(key, { queue, lastCheck });
-        await redis.pexpire(key, expires);
+        local timeElapsed = (now - lastCheck) / 1000
+        queue = math.max(queue - timeElapsed * leakRate, 0)
+        lastCheck = now
 
-        return false;
-    }
+        if queue > capacity then
+            redis.call("HSET", KEYS[1], "queue", queue, "lastCheck", lastCheck)
+            redis.call("PEXPIRE", KEYS[1], expires)
+            return 0
+        end
 
-    queue += 1;
+        queue = queue + 1
 
-    await redis.hset(key, { queue, lastCheck });
-    await redis.pexpire(key, expires);
+        redis.call("HSET", KEYS[1], "queue", queue, "lastCheck", lastCheck)
+        redis.call("PEXPIRE", KEYS[1], expires)
+        return 1
+    `;
 
-    return true;
+    const allowed = await redis.eval(script, 1, key, now, capacity, leakRate, expires);
+    return allowed === 1;
 }
 
 module.exports = leakyBucket;
