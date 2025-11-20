@@ -22,13 +22,15 @@ const rateLimiterConfigs = [
         algorithm: 'leakyBucket',
         identifier: process.env.LEAKY_BUCKET_IDENTIFIER,
         capacity: parseInt(process.env.LEAKY_BUCKET_CAPACITY, 10),
-        leakRate: parseFloat(process.env.LEAKY_BUCKET_LEAK_RATE)
+        leakRate: parseFloat(process.env.LEAKY_BUCKET_LEAK_RATE),
+        ttl: parseFloat(process.env.LEAKY_BUCKET_TTL)
     },
     {
         algorithm: 'tokenBucket',
         identifier: process.env.TOKEN_BUCKET_IDENTIFIER,
         capacity: parseInt(process.env.TOKEN_BUCKET_CAPACITY, 10),
-        refillRate: parseFloat(process.env.TOKEN_BUCKET_REFILL_RATE)
+        refillRate: parseFloat(process.env.TOKEN_BUCKET_REFILL_RATE),
+        ttl: parseFloat(process.env.TOKEN_BUCKET_TTL)
     }
 ];
 

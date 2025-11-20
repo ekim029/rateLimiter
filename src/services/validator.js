@@ -20,6 +20,9 @@ const validateOption = (option) => {
             if (!option.refillRate || typeof option.refillRate !== "number") {
                 throw new Error(`Invalid refill Rate for ${algorithm}`);
             }
+            if (!option.ttl || typeof option.ttl !== "number") {
+                throw new Error(`Invalid ttl for ${algorithm}`);
+            }
             break;
 
         case "leakyBucket":
@@ -28,6 +31,9 @@ const validateOption = (option) => {
             }
             if (!option.leakRate || typeof option.leakRate !== "number") {
                 throw new Error(`Invalid leak Rate for ${algorithm}`);
+            }
+            if (!option.ttl || typeof option.ttl !== "number") {
+                throw new Error(`Invalid ttl for ${algorithm}`);
             }
             break;
 
