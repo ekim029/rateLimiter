@@ -5,20 +5,28 @@ const slidingWindowLog = async (trackingKey, option) => {
 
     const key = `slidingWindowLog:${trackingKey}`;
     const now = Date.now();
-    const startTime = now - window;
 
-    await redis.zremrangebyscore(key, 0, startTime);
+    const script = `
+        local now = tonumber(ARGV[1])
+        local max = tonumber(ARGV[2])
+        local window = tonumber(ARGV[3])
 
-    let count = await redis.zcard(key);
+        redis.call("ZREMRANGEBYSCORE", KEYS[1], 0, now - window)
 
-    if (count > maxRequests) {
-        return false;
-    }
+        local count = redis.call("ZCARD", KEYS[1])
 
-    await redis.zadd(key, now, `now.${Math.random()}`);
-    await redis.pexpire(key, window);
+        if count > max then
+            return 0
+        end
 
-    return true;
+        redis.call("ZADD", KEYS[1], now, now)
+        redis.call("PEXPIRE", KEYS[1], window)
+        
+        return 1
+    `;
+
+    const allowed = await redis.eval(script, 1, key, now, maxRequests, window);
+    return allowed === 1;
 }
 
 module.exports = slidingWindowLog;
