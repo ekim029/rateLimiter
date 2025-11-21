@@ -25,7 +25,7 @@ const leakyBucket = async (trackingKey, option) => {
         queue = math.max(queue - timeElapsed * leakRate, 0)
         lastCheck = now
 
-        if queue > capacity then
+        if queue >= capacity then
             redis.call("HSET", KEYS[1], "queue", queue, "lastCheck", lastCheck)
             redis.call("PEXPIRE", KEYS[1], expires)
             return 0
