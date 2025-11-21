@@ -15,7 +15,7 @@ const slidingWindowLog = async (trackingKey, option) => {
 
         local count = redis.call("ZCARD", KEYS[1])
 
-        if count > max then
+        if count >= max then
             return 0
         end
 
